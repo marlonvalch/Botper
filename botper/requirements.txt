@@ -1,0 +1,19 @@
+# Core dependencies
+python-dotenv
+pymongo
+uvicorn
+fastapi
+
+# Webex
+webexteamssdk
+
+# Microsoft Teams
+botbuilder-core
+botbuilder-schema
+
+# Zoom
+zoom-python
+
+# Other utilities
+requests
+pytz
