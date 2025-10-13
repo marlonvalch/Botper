@@ -97,6 +97,10 @@ def main():
     # Create webhook for attachment actions (button clicks)
     print("\n🔘 Creating attachment actions webhook...")
     create_webhook('Botper Actions Webhook', 'attachmentActions', 'created')
+    
+    # Create webhook for meetings (automatic task creation)
+    print("\n🎬 Creating meeting webhook...")
+    create_webhook('Botper Meeting Webhook', 'meetings', 'created')
 
 if __name__ == "__main__":
     main()

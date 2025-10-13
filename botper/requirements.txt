@@ -3,6 +3,7 @@ python-dotenv
 pymongo
 uvicorn
 fastapi
+python-multipart
 
 # Webex
 webexteamssdk

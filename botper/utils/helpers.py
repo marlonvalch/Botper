@@ -16,7 +16,15 @@ def format_task_card(tasks, platform="webex"):
 		for task in tasks:
 			task_id = str(task.get('_id', ''))
 			checked = task.get('completed', False)
-			title = strikethrough(task['title']) if checked else task['title']
+			title = task['title']
+			
+			# Add meeting link to title if it's a meeting task
+			if task.get('type') == 'meeting' and task.get('meeting_link'):
+				meeting_link = task.get('meeting_link')
+				if meeting_link != 'No link available':
+					title = f"{title}: [Join Meeting]({meeting_link})"
+			
+			title = strikethrough(title) if checked else title
 			
 			# Create a container for each task with title and action buttons
 			task_container = {

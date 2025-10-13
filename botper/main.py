@@ -195,7 +195,7 @@ def start_bot_with_smart_port():
         return 1
 
     # Smart port management
-    preferred_port = int(os.getenv('BOTPER_PORT', 8001))
+    preferred_port = int(os.getenv('BOTPER_PORT', 8000))
     
     print(f"\nChecking port {preferred_port}...")
     

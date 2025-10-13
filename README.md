@@ -22,7 +22,11 @@ A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and me
 
    ```powershell
    uv venv .venv
-   .venv\Scripts\activate
+
+   
+   .\.venv\Scripts\Activate.ps1
+
+   
    ```
 
 3. **Install dependencies**
@@ -56,11 +60,81 @@ A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and me
 
    Use [ngrok](https://ngrok.com/) or similar to expose your FastAPI endpoints to the internet for Webex/Teams/Zoom webhooks.
 
+## 👤 User Interaction Flow
+
+### **Starting the Bot**
+```powershell
+python botper/main.py
+```
+
+The startup will:
+- Check platform configurations (Webex/Teams/Zoom)
+- Start ngrok tunnel automatically 
+- Display webhook setup instructions
+
+### **Basic Bot Usage (No OAuth Required)**
+
+**In any Webex space where the bot is added:**
+
+1. **Get started:**
+   ```
+   User: "hello"
+   Bot: Hello! This is Botper! I will help you manage your tasks and meetings.
+   
+   🎯 COMMANDS:
+   📋 Tasks:
+   - task <description>
+   - list
+   - delete <task id>
+   
+   📞 Meetings:
+   - meeting <title> - Schedule a meeting
+   ```
+
+2. **Create tasks:**
+   ```
+   User: "task Prepare presentation for Monday"
+   Bot: "OK: Task created: Prepare presentation for Monday"
+   [Shows updated task list with interactive buttons]
+   ```
+
+3. **Manage tasks:**
+   ```
+   User: "list"
+   Bot: [Shows adaptive card with checkboxes, modify/delete buttons]
+   ```
+
+### **Enhanced Usage (With OAuth Integration)**
+
+**Setup OAuth (one-time):**
+1. Visit `http://localhost:8001` (or ngrok URL) and authorize the integration
+2. Click "🚀 Connect to Webex" to complete the connection
+
+**Now meetings are automatic:**
+```
+User: "meeting Team Standup" 
+Bot: "✅ Meeting Created Successfully!
+
+📞 Team Standup
+🔗 Link: https://cisco.webex.com/meet/pr123456789
+⏰ Starts: 15:00 UTC
+
+🤖 Automatically added to your tasks!"
+```
+
+### **Key Benefits**
+- **Simple Commands**: Just type in Webex chat
+- **Real Meetings**: Creates actual Webex video calls
+- **Auto Tasks**: Meetings become trackable tasks automatically
+- **Interactive**: Click buttons instead of typing commands
+- **Persistent**: Tasks saved in MongoDB
+
 ## Webhook Endpoints
-- Webex: `POST /webex/webhook` (default port 8000)
-- Teams: `POST /teams/webhook` (default port 8001)
-- Zoom: `POST /zoom/webhook` (default port 8002)
+- Webex: `POST /webex/webhook` (default port 8001)
+- Teams: `POST /teams/webhook` (default port 8002)  
+- Zoom: `POST /zoom/webhook` (default port 8003)
 
 ## Notes
-- Meeting scheduling and card interactivity require further integration with each platform's SDK and APIs.
-- For production, run each bot in a separate process/thread for concurrency.
+- Meeting links are real, functional Webex video calls created via official API
+- OAuth integration enables automatic meeting creation with user permissions
+- For production, configure proper webhook URLs and security
