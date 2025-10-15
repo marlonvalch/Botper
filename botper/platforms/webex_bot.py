@@ -1,10 +1,11 @@
 import os
 import sys
+import re
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from webexteamssdk import WebexTeamsAPI
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from core.base_bot import BaseBot
 from core.tasks import TaskManager
@@ -15,6 +16,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 WEBEX_BOT_TOKEN = os.getenv("WEBEX_BOT_TOKEN")
+# Configuration for meeting notifications (set to False to disable)
+ENABLE_MEETING_NOTIFICATIONS = os.getenv("ENABLE_MEETING_NOTIFICATIONS", "true").lower() == "true"
 
 class WebexBot(BaseBot):
 	def __init__(self):
@@ -27,6 +30,7 @@ class WebexBot(BaseBot):
 		self.processed_messages = set()  # Track processed message IDs to avoid duplicates
 		self.pending_meeting_tasks = {}  # Track meeting title for linking task
 		self.processed_events = set()  # Track processed calendar events
+		self.enable_notifications = ENABLE_MEETING_NOTIFICATIONS  # Control meeting notifications
 		self.setup_routes()
 		# Calendar monitoring disabled - bot token doesn't have meeting API access
 
@@ -174,8 +178,6 @@ class WebexBot(BaseBot):
 						if meeting_title:
 							# Try to create meeting via OAuth first, then fallback to redirect
 							self.handle_meeting_request(room_id, person_id, person_email, meeting_title)
-						else:
-							self.send_message(room_id, "Please provide a meeting title. Example: 'schedule meeting Team Standup'")
 
 				except Exception as e:
 					error_msg = str(e)
@@ -250,29 +252,207 @@ class WebexBot(BaseBot):
 				
 				print(f"OAuth successful for user: {user_info.get('displayName')} ({user_info.get('emails', ['unknown'])[0]})")
 				
-				# Success page with meeting creation option
+				# Success page with enhanced meeting creation form
 				return HTMLResponse(f"""
 				<html>
-					<head><title>Botper - Authorization Successful</title></head>
-					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+					<head>
+						<title>Botper - Authorization Successful</title>
+						<style>
+							body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; }}
+							.form-container {{ max-width: 600px; margin: 0 auto; text-align: left; }}
+							.form-group {{ margin: 15px 0; }}
+							label {{ display: block; margin-bottom: 5px; font-weight: bold; }}
+							input, select, textarea {{ width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }}
+							button {{ padding: 10px 20px; background-color: #00BCF2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }}
+							button:hover {{ background-color: #0099cc; }}
+							.timezone-select {{ max-height: 150px; overflow-y: auto; }}
+						</style>
+					</head>
+					<body>
 						<h1 style="color: #00BCF2;">✅ Authorization Successful!</h1>
 						<p>Welcome, <strong>{user_info.get('displayName', 'User')}</strong>!</p>
 						<p>Botper is now connected to your Webex account.</p>
 						
-						<div style="margin: 30px 0;">
-							<h2>🎯 Test Meeting Creation</h2>
-							<p>Create a test meeting to see the bot integration:</p>
-							<form action="/create-meeting" method="post" style="display: inline-block;">
+						<div class="form-container">
+							<h2>🎯 Schedule Meeting</h2>
+							<p>Create a meeting with custom time, timezone, and participants:</p>
+							<form action="/create-meeting" method="post">
 								<input type="hidden" name="user_id" value="{user_id}">
-								<input type="text" name="title" placeholder="Meeting Title" value="Botper Test Meeting" style="padding: 10px; margin: 5px; width: 200px;">
-								<br>
-								<button type="submit" style="padding: 10px 20px; background-color: #00BCF2; color: white; border: none; border-radius: 5px; margin: 10px;">
-									🚀 Create Test Meeting
-								</button>
+								
+								<div class="form-group">
+									<label for="title">Meeting Title:</label>
+									<input type="text" name="title" id="title" placeholder="Enter meeting title" value="Botper Test Meeting" required>
+								</div>
+								
+								<div class="form-group">
+									<label for="meeting_date">Date:</label>
+									<input type="date" name="meeting_date" id="meeting_date" required>
+								</div>
+								
+								<div class="form-group">
+									<label for="meeting_time">Time:</label>
+									<select name="meeting_time" id="meeting_time" required>
+										<option value="00:00">12:00 AM</option>
+										<option value="00:30">12:30 AM</option>
+										<option value="01:00">1:00 AM</option>
+										<option value="01:30">1:30 AM</option>
+										<option value="02:00">2:00 AM</option>
+										<option value="02:30">2:30 AM</option>
+										<option value="03:00">3:00 AM</option>
+										<option value="03:30">3:30 AM</option>
+										<option value="04:00">4:00 AM</option>
+										<option value="04:30">4:30 AM</option>
+										<option value="05:00">5:00 AM</option>
+										<option value="05:30">5:30 AM</option>
+										<option value="06:00">6:00 AM</option>
+										<option value="06:30">6:30 AM</option>
+										<option value="07:00">7:00 AM</option>
+										<option value="07:30">7:30 AM</option>
+										<option value="08:00">8:00 AM</option>
+										<option value="08:30">8:30 AM</option>
+										<option value="09:00" selected>9:00 AM</option>
+										<option value="09:30">9:30 AM</option>
+										<option value="10:00">10:00 AM</option>
+										<option value="10:30">10:30 AM</option>
+										<option value="11:00">11:00 AM</option>
+										<option value="11:30">11:30 AM</option>
+										<option value="12:00">12:00 PM</option>
+										<option value="12:30">12:30 PM</option>
+										<option value="13:00">1:00 PM</option>
+										<option value="13:30">1:30 PM</option>
+										<option value="14:00">2:00 PM</option>
+										<option value="14:30">2:30 PM</option>
+										<option value="15:00">3:00 PM</option>
+										<option value="15:30">3:30 PM</option>
+										<option value="16:00">4:00 PM</option>
+										<option value="16:30">4:30 PM</option>
+										<option value="17:00">5:00 PM</option>
+										<option value="17:30">5:30 PM</option>
+										<option value="18:00">6:00 PM</option>
+										<option value="18:30">6:30 PM</option>
+										<option value="19:00">7:00 PM</option>
+										<option value="19:30">7:30 PM</option>
+										<option value="20:00">8:00 PM</option>
+										<option value="20:30">8:30 PM</option>
+										<option value="21:00">9:00 PM</option>
+										<option value="21:30">9:30 PM</option>
+										<option value="22:00">10:00 PM</option>
+										<option value="22:30">10:30 PM</option>
+										<option value="23:00">11:00 PM</option>
+										<option value="23:30">11:30 PM</option>
+									</select>
+								</div>
+								
+								<div class="form-group">
+									<label for="timezone">Timezone:</label>
+									<small style="color: #666; display: block; margin-bottom: 5px;">Select the timezone where the meeting will take place</small>
+									<select name="timezone" id="timezone" required>
+										<option value="UTC-12:00">GMT-12:00, Dateline (Eniwetok)</option>
+										<option value="UTC-11:00">GMT-11:00, Samoa (Samoa)</option>
+										<option value="UTC-10:00">GMT-10:00, Hawaii (Honolulu)</option>
+										<option value="UTC-09:00">GMT-09:00, Alaska (Anchorage)</option>
+										<option value="UTC-08:00">GMT-08:00, Pacific (San Jose)</option>
+										<option value="UTC-07:00">GMT-07:00, Mountain (Arizona)</option>
+										<option value="UTC-07:00">GMT-07:00, Mountain (Denver)</option>
+										<option value="UTC-06:00">GMT-06:00, Central (Chicago)</option>
+										<option value="UTC-06:00">GMT-06:00, Mexico (Mexico City,Tegucigalpa)</option>
+										<option value="UTC-06:00">GMT-06:00, Central (Regina)</option>
+										<option value="UTC-05:00">GMT-05:00, S. America Pacific (Bogota)</option>
+										<option value="UTC-05:00" selected>GMT-05:00, Eastern (New York)</option>
+										<option value="UTC-05:00">GMT-05:00, Eastern (Indiana)</option>
+										<option value="UTC-04:00">GMT-04:00, Atlantic (Halifax)</option>
+										<option value="UTC-04:00">GMT-04:00, S. America Western (Caracas)</option>
+										<option value="UTC-03:30">GMT-03:30, Newfoundland (Newfoundland)</option>
+										<option value="UTC-03:00">GMT-03:00, S. America Eastern (Brasilia)</option>
+										<option value="UTC-03:00">GMT-03:00, S. America Eastern (Buenos Aires)</option>
+										<option value="UTC-02:00">GMT-02:00, Mid-Atlantic (Mid-Atlantic)</option>
+										<option value="UTC-01:00">GMT-01:00, Azores (Azores)</option>
+										<option value="UTC+00:00">GMT+00:00, Greenwich (Casablanca)</option>
+										<option value="UTC+00:00">GMT+00:00, GMT (London)</option>
+										<option value="UTC+01:00">GMT+01:00, Europe (Amsterdam)</option>
+										<option value="UTC+01:00">GMT+01:00, Europe (Paris)</option>
+										<option value="UTC+01:00">GMT+01:00, Europe (Prague)</option>
+										<option value="UTC+01:00">GMT+01:00, Europe (Berlin)</option>
+										<option value="UTC+02:00">GMT+02:00, Greece (Athens)</option>
+										<option value="UTC+02:00">GMT+02:00, Eastern Europe (Bucharest)</option>
+										<option value="UTC+02:00">GMT+02:00, Egypt (Cairo)</option>
+										<option value="UTC+02:00">GMT+02:00, South Africa (Pretoria)</option>
+										<option value="UTC+02:00">GMT+02:00, Northern Europe (Helsinki)</option>
+										<option value="UTC+02:00">GMT+02:00, Israel (Tel Aviv)</option>
+										<option value="UTC+03:00">GMT+03:00, Saudi Arabia (Baghdad)</option>
+										<option value="UTC+03:00">GMT+03:00, Russian (Moscow)</option>
+										<option value="UTC+03:00">GMT+03:00, Nairobi (Nairobi)</option>
+										<option value="UTC+03:00">GMT+03:00, Iran (Tehran)</option>
+										<option value="UTC+04:00">GMT+04:00, Arabian (Abu Dhabi, Muscat)</option>
+										<option value="UTC+04:00">GMT+04:00, Baku (Baku)</option>
+										<option value="UTC+04:00">GMT+04:00, Afghanistan (Kabul)</option>
+										<option value="UTC+05:00">GMT+05:00, West Asia (Ekaterinburg)</option>
+										<option value="UTC+05:00">GMT+05:00, West Asia (Islamabad)</option>
+										<option value="UTC+05:30">GMT+05:30, India (Bombay)</option>
+										<option value="UTC+06:00">GMT+06:00, Columbo (Columbo)</option>
+										<option value="UTC+06:00">GMT+06:00, Central Asia (Almaty)</option>
+										<option value="UTC+07:00">GMT+07:00, Bangkok (Bangkok)</option>
+										<option value="UTC+08:00">GMT+08:00, China (Beijing)</option>
+										<option value="UTC+08:00">GMT+08:00, Australia Western (Perth)</option>
+										<option value="UTC+08:00">GMT+08:00, Singapore (Singapore)</option>
+										<option value="UTC+08:00">GMT+08:00, Taipei (Hong Kong)</option>
+										<option value="UTC+09:00">GMT+09:00, Tokyo (Tokyo)</option>
+										<option value="UTC+09:00">GMT+09:00, Korea (Seoul)</option>
+										<option value="UTC+09:30">GMT+09:30, Yakutsk (Yakutsk)</option>
+										<option value="UTC+09:30">GMT+09:30, Australia Central (Adelaide)</option>
+										<option value="UTC+09:30">GMT+09:30, Australia Central (Darwin)</option>
+										<option value="UTC+10:00">GMT+10:00, Australia Eastern (Brisbane)</option>
+										<option value="UTC+10:00">GMT+10:00, Australia Eastern (Sydney)</option>
+										<option value="UTC+10:00">GMT+10:00, West Pacific (Guam)</option>
+										<option value="UTC+10:00">GMT+10:00, Tasmania (Hobart)</option>
+										<option value="UTC+10:00">GMT+10:00, Vladivostok (Vladivostok)</option>
+										<option value="UTC+11:00">GMT+11:00, Central Pacific (Solomon Is)</option>
+										<option value="UTC+12:00">GMT+12:00, New Zealand (Wellington)</option>
+										<option value="UTC+12:00">GMT+12:00, Fiji (Fiji)</option>
+									</select>
+								</div>
+								
+								<div class="form-group">
+									<label for="duration">Duration (hours):</label>
+									<select name="duration" id="duration" required>
+										<option value="0.5">30 minutes</option>
+										<option value="1" selected>1 hour</option>
+										<option value="1.5">1.5 hours</option>
+										<option value="2">2 hours</option>
+										<option value="3">3 hours</option>
+										<option value="4">4 hours</option>
+									</select>
+								</div>
+								
+								<div class="form-group">
+									<label for="participants">Participants (email addresses, comma-separated):</label>
+									<textarea name="participants" id="participants" rows="3" placeholder="user1@company.com, user2@company.com, user3@company.com"></textarea>
+								</div>
+								
+								<div class="form-group">
+									<button type="submit">🚀 Schedule Meeting</button>
+								</div>
 							</form>
 						</div>
 						
-						<p style="color: #666; font-size: 14px;">
+						<script>
+							// Set minimum date to today and default to tomorrow
+							const today = new Date();
+							const tomorrow = new Date(today);
+							tomorrow.setDate(tomorrow.getDate() + 1);
+							
+							const dateInput = document.getElementById('meeting_date');
+							dateInput.min = today.toISOString().split('T')[0];
+							dateInput.valueAsDate = tomorrow;
+							
+							// Show helpful message about timezone
+							const timezoneSelect = document.getElementById('timezone');
+							timezoneSelect.onchange = function() {{
+								console.log('Selected timezone:', this.value);
+							}};
+						</script>
+						
+						<p style="color: #666; font-size: 14px; margin-top: 30px;">
 							Your bot will automatically detect when meetings are created and add them as tasks!
 						</p>
 						<p><a href="https://teams.webex.com" style="color: #00BCF2;">Return to Webex</a></p>
@@ -340,10 +520,15 @@ class WebexBot(BaseBot):
 
 		@self.app.post("/create-meeting")
 		async def create_meeting(request: Request):
-			"""Create a meeting using user's OAuth token"""
+			"""Create a meeting using user's OAuth token with custom time, timezone, and participants"""
 			form_data = await request.form()
 			user_id = form_data.get('user_id')
 			title = form_data.get('title', 'Botper Test Meeting')
+			meeting_date = form_data.get('meeting_date')
+			meeting_time = form_data.get('meeting_time', '09:00')
+			timezone = form_data.get('timezone', 'UTC-05:00')
+			duration = float(form_data.get('duration', '1'))
+			participants_str = form_data.get('participants', '')
 			
 			if not user_id or user_id not in self.user_tokens:
 				return HTMLResponse("<h1>Error</h1><p>User not authorized. Please authorize first.</p>", status_code=400)
@@ -352,22 +537,90 @@ class WebexBot(BaseBot):
 				# Get user's access token
 				access_token = self.user_tokens[user_id]['access_token']
 				
-				# Calculate meeting time (1 hour from now)
+				# Parse timezone offset
 				from datetime import datetime, timedelta
 				import pytz
+				import re
 				
-				now = datetime.now(pytz.UTC)
-				start_time = now + timedelta(minutes=5)  # Start in 5 minutes
-				end_time = start_time + timedelta(hours=1)  # 1 hour duration
+				# Extract offset from timezone string (e.g., "UTC-05:00" -> -5.0)
+				tz_match = re.match(r'UTC([+-])(\d{1,2}):(\d{2})', timezone)
+				if tz_match:
+					sign = -1 if tz_match.group(1) == '-' else 1
+					hours = int(tz_match.group(2))
+					minutes = int(tz_match.group(3))
+					offset_hours = sign * (hours + minutes / 60.0)
+				else:
+					offset_hours = 0  # Default to UTC
 				
+				# Parse date and time
+				if meeting_date:
+					meeting_datetime_str = f"{meeting_date} {meeting_time}"
+					meeting_datetime = datetime.strptime(meeting_datetime_str, '%Y-%m-%d %H:%M')
+				else:
+					# Default to tomorrow at the specified time
+					now = datetime.now()
+					tomorrow = now + timedelta(days=1)
+					meeting_datetime = datetime.combine(tomorrow.date(), datetime.strptime(meeting_time, '%H:%M').time())
+				
+				# Convert to UTC
+				local_tz_offset = timedelta(hours=offset_hours)
+				start_time_utc = meeting_datetime - local_tz_offset
+				end_time_utc = start_time_utc + timedelta(hours=duration)
+				
+				# Validate that the meeting is scheduled for the future (with 2-minute buffer)
+				now_utc = datetime.utcnow()
+				min_future_time = now_utc + timedelta(minutes=2)
+				
+				# Debug logging
+				print(f"Meeting scheduling debug:")
+				print(f"  Local time: {meeting_datetime} ({timezone})")
+				print(f"  UTC time: {start_time_utc}")
+				print(f"  Current UTC: {now_utc}")
+				print(f"  Min future time: {min_future_time}")
+				
+				if start_time_utc <= min_future_time:
+					# If the time is in the past, return an error
+					display_timezone = timezone.replace('UTC', 'GMT')
+					return HTMLResponse(f"""
+					<html>
+						<head><title>Meeting Scheduling Error</title></head>
+						<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+							<h1 style="color: red;">❌ Invalid Meeting Time</h1>
+							<div style="max-width: 500px; margin: 20px auto; text-align: left;">
+								<p><strong>Error:</strong> The selected meeting time must be at least 2 minutes in the future.</p>
+								<p><strong>Selected:</strong> {meeting_datetime.strftime('%Y-%m-%d %H:%M')} ({display_timezone})</p>
+								<p><strong>UTC Time:</strong> {start_time_utc.strftime('%Y-%m-%d %H:%M')} UTC</p>
+								<p><strong>Current UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M')} UTC</p>
+								<p><strong>Minimum Time:</strong> {min_future_time.strftime('%Y-%m-%d %H:%M')} UTC</p>
+								<p><strong>💡 Tip:</strong> Make sure to account for timezone differences when scheduling!</p>
+							</div>
+							<p>
+								<a href="/" style="background-color: #00BCF2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+									← Try Again
+								</a>
+							</p>
+						</body>
+					</html>
+					""", status_code=400)
+				
+				# Parse participants
+				participants_list = []
+				if participants_str.strip():
+					participants_list = [email.strip() for email in participants_str.split(',') if email.strip()]
+				
+				# Create meeting details
 				meeting_details = {
 					'title': title,
-					'start': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
-					'end': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+					'start': start_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
+					'end': end_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
 					'timezone': 'UTC',
 					'enabledAutoRecordMeeting': False,
 					'allowAnyUserToBeCoHost': False
 				}
+				
+				# Add invitees if provided
+				if participants_list:
+					meeting_details['invitees'] = [{'email': email, 'displayName': email.split('@')[0]} for email in participants_list]
 				
 				# Create meeting using user's OAuth token
 				meeting = self.oauth_handler.create_meeting(access_token, meeting_details)
@@ -382,7 +635,7 @@ class WebexBot(BaseBot):
 					"type": "meeting",
 					"meeting_link": meeting_link,
 					"platform": "webex",
-					"start_time": start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+					"start_time": start_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 				}
 				
 				try:
@@ -391,29 +644,88 @@ class WebexBot(BaseBot):
 				except Exception as task_error:
 					print(f"❌ Failed to create task for meeting: {task_error}")
 				
-				# Return success page
+				# Send meeting notification to Webex spaces
+				try:
+					self.send_meeting_notification(
+						meeting_title=title,
+						meeting_link=meeting_link,
+						meeting_datetime=meeting_datetime,
+						timezone=timezone,
+						participants_list=participants_list,
+						source_room_id=None  # OAuth callback - no specific source room
+					)
+				except Exception as notification_error:
+					print(f"❌ Failed to send meeting notification: {notification_error}")
+				
+				# Format display times
+				display_start_time = meeting_datetime.strftime('%Y-%m-%d %H:%M')
+				display_timezone = timezone.replace('UTC', 'GMT')
+				
+				# Format participants for display
+				participants_display = "None"
+				if participants_list:
+					if len(participants_list) <= 3:
+						participants_display = ', '.join(participants_list)
+					else:
+						participants_display = f"{', '.join(participants_list[:3])} and {len(participants_list) - 3} more"
+				
+				# Return enhanced success page
 				return HTMLResponse(f"""
 				<html>
-					<head><title>Meeting Created Successfully</title></head>
-					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+					<head>
+						<title>Meeting Created Successfully</title>
+						<style>
+							body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; }}
+							.meeting-info {{ background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px auto; max-width: 600px; }}
+							.next-steps {{ background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 600px; }}
+							.detail-row {{ margin: 10px 0; text-align: left; }}
+							.label {{ font-weight: bold; color: #333; }}
+						</style>
+					</head>
+					<body>
 						<h1 style="color: #00BCF2;">🎉 Meeting Created Successfully!</h1>
-						<div style="background-color: #f0f8ff; padding: 20px; border-radius: 10px; margin: 20px 0;">
+						
+						<div class="meeting-info">
 							<h2>📞 {meeting.get('title', 'Meeting')}</h2>
-							<p><strong>Meeting ID:</strong> {meeting.get('meetingNumber', 'N/A')}</p>
-							<p><strong>Start Time:</strong> {start_time.strftime('%Y-%m-%d %H:%M UTC')}</p>
-							<p><strong>Join Link:</strong> <a href="{meeting.get('webLink', '#')}" target="_blank">{meeting.get('webLink', 'No link available')}</a></p>
+							<div class="detail-row">
+								<span class="label">Meeting ID:</span> {meeting.get('meetingNumber', 'N/A')}
+							</div>
+							<div class="detail-row">
+								<span class="label">Date & Time:</span> {display_start_time} ({display_timezone})
+							</div>
+							<div class="detail-row">
+								<span class="label">Duration:</span> {duration} hour{'s' if duration != 1 else ''}
+							</div>
+							<div class="detail-row">
+								<span class="label">Participants:</span> {participants_display}
+							</div>
+							<div class="detail-row">
+								<span class="label">Join Link:</span> 
+								<a href="{meeting.get('webLink', '#')}" target="_blank" style="color: #00BCF2; word-break: break-all;">
+									{meeting.get('webLink', 'No link available')}
+								</a>
+							</div>
+							{f'<div class="detail-row"><span class="label">Password:</span> {meeting.get("password", "N/A")}</div>' if meeting.get("password") else ''}
 						</div>
 						
-						<div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+						<div class="next-steps">
 							<h3>🤖 What Happens Next:</h3>
-							<p>Your bot will automatically receive a webhook about this meeting and create a task for it!</p>
-							<p>Check your Webex spaces where the bot is present to see the automatic task creation.</p>
+							<p>✅ Your bot will automatically receive a webhook about this meeting</p>
+							<p>✅ A task will be created automatically with the meeting link</p>
+							<p>✅ Check your Webex spaces where the bot is present to see the task</p>
+							{f'<p>✅ Invitations sent to: {len(participants_list)} participant{"s" if len(participants_list) != 1 else ""}</p>' if participants_list else ''}
 						</div>
 						
-						<p>
-							<a href="/" style="color: #00BCF2;">← Back to Home</a> | 
-							<a href="{meeting.get('webLink', '#')}" target="_blank" style="color: #00BCF2;">Join Meeting →</a>
-						</p>
+						<div style="margin: 30px 0;">
+							<a href="/" style="background-color: #00BCF2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
+								← Schedule Another Meeting
+							</a>
+							<a href="{meeting.get('webLink', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
+								🚀 Join Meeting Now
+							</a>
+						</div>
+						
+						<p><a href="https://teams.webex.com" style="color: #00BCF2;">Return to Webex</a></p>
 					</body>
 				</html>
 				""")
@@ -454,6 +766,110 @@ class WebexBot(BaseBot):
 			print(f"Message sent successfully: {result.id}")
 		except Exception as e:
 			print(f"Error sending message: {e}")
+
+	def send_meeting_notification(self, meeting_title, meeting_link, meeting_datetime, timezone, participants_list=None, source_room_id=None):
+		"""Send meeting scheduled notification to other Webex spaces (excluding the source room)"""
+		if not self.enable_notifications:
+			print("📢 Meeting notifications are disabled")
+			return
+			
+		try:
+			# Format the notification message
+			display_timezone = timezone.replace('UTC', 'GMT')
+			notification_text = f"meeting '{meeting_title}' scheduled"
+			
+			# Create an attractive notification card
+			notification_card = {
+				"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"type": "AdaptiveCard",
+				"version": "1.3",
+				"body": [
+					{
+						"type": "TextBlock",
+						"text": "📅 Meeting Scheduled",
+						"weight": "Bolder",
+						"size": "Medium",
+						"color": "Good"
+					},
+					{
+						"type": "TextBlock",
+						"text": meeting_title,
+						"weight": "Bolder",
+						"size": "Large",
+						"wrap": True
+					},
+					{
+						"type": "FactSet",
+						"facts": [
+							{
+								"title": "📅 Date & Time:",
+								"value": f"{meeting_datetime.strftime('%Y-%m-%d %H:%M')} ({display_timezone})"
+							},
+							{
+								"title": "🔗 Join Link:",
+								"value": f"[Join Meeting]({meeting_link})"
+							}
+						]
+					}
+				],
+				"actions": [
+					{
+						"type": "Action.OpenUrl",
+						"title": "🚀 Join Now",
+						"url": meeting_link
+					}
+				]
+			}
+			
+			# Add participants info if provided
+			if participants_list:
+				participant_count = len(participants_list)
+				if participant_count <= 3:
+					participants_display = ', '.join(participants_list)
+				else:
+					participants_display = f"{', '.join(participants_list[:3])} and {participant_count - 3} more"
+				
+				notification_card["body"][2]["facts"].append({
+					"title": "👥 Participants:",
+					"value": participants_display
+				})
+			
+			# Send notification to selected rooms (excluding source room)
+			notification_count = 0
+			max_additional_rooms = 5
+			
+			try:
+				# Get all rooms/spaces where the bot is present
+				rooms = list(self.api.rooms.list())
+				
+				for room in rooms:
+					# Skip the source room (botper room) to avoid duplicate notifications
+					if room.id == source_room_id:
+						continue
+						
+					# Stop if we've sent enough notifications
+					if notification_count >= max_additional_rooms:
+						break
+					
+					try:
+						# Skip direct message rooms for general notifications
+						if room.type == "direct":
+							continue
+							
+						self.send_message(room.id, notification_text, card=notification_card)
+						notification_count += 1
+						print(f"✅ Meeting notification sent to room: {room.title}")
+						
+					except Exception as room_error:
+						print(f"❌ Failed to send notification to room {room.id}: {room_error}")
+						
+			except Exception as rooms_error:
+				print(f"❌ Failed to get room list: {rooms_error}")
+			
+			print(f"📢 Meeting notification sent to {notification_count} Webex spaces (excluding source room)")
+			
+		except Exception as e:
+			print(f"❌ Error sending meeting notifications: {e}")
 
 	def handle_task_command(self, command, room_id, data=None):
 		if command == "create":
@@ -537,6 +953,19 @@ class WebexBot(BaseBot):
 					print(f"✅ Task created automatically for meeting: {meeting_title}")
 				except Exception as task_error:
 					print(f"❌ Failed to create task for meeting: {task_error}")
+				
+				# Send notification to Webex spaces
+				try:
+					self.send_meeting_notification(
+						meeting_title=meeting_title,
+						meeting_link=meeting_link,
+						meeting_datetime=start_time,
+						timezone="UTC+00:00",  # This method uses UTC times
+						participants_list=None,  # No specific participants for chat command
+						source_room_id=room_id  # Send to the originating room
+					)
+				except Exception as notification_error:
+					print(f"❌ Failed to send meeting notification: {notification_error}")
 				
 				self.send_message(room_id, f"✅ **Meeting Created Successfully!**\n\n📞 **{meeting_title}**\n🔗 **Link:** {meeting_link}\n⏰ **Starts:** {start_time.strftime('%H:%M UTC')}\n\n🤖 Task created automatically! Use 'list' to see it.")
 				
@@ -692,6 +1121,19 @@ class WebexBot(BaseBot):
 					}
 					
 					self.task_manager.create_task(task)
+					
+					# Send notification to Webex spaces
+					try:
+						self.send_meeting_notification(
+							meeting_title=meeting_title,
+							meeting_link=meeting_link,
+							meeting_datetime=start_time,
+							timezone="UTC+00:00",  # This method uses UTC times
+							participants_list=None,  # No specific participants for this method
+							source_room_id=room_id  # Send to the originating room
+						)
+					except Exception as notification_error:
+						print(f"❌ Failed to send meeting notification: {notification_error}")
 					
 					# Send success message with meeting details
 					success_card = {

@@ -107,8 +107,9 @@ The startup will:
 ### **Enhanced Usage (With OAuth Integration)**
 
 **Setup OAuth (one-time):**
-1. Visit `http://localhost:8001` (or ngrok URL) and authorize the integration
-2. Click "🚀 Connect to Webex" to complete the connection
+1. Visit `http://localhost:8001` (or ngrok URL)
+2. Click "🚀 Connect to Webex"
+3. Authorize the integration
 
 **Now meetings are automatic:**
 ```
