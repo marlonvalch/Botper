@@ -75,6 +75,10 @@ class WebexBot(BaseBot):
 					if action_data.get('action') == 'delete':
 						task_id = action_data.get('task_id')
 						self.handle_task_command("delete", room_id, {"task_id": task_id})
+					elif action_data.get('action') == 'toggle_complete':
+						task_id = action_data.get('task_id')
+						current_status = action_data.get('current_status', False)
+						self.handle_toggle_complete(room_id, task_id, current_status)
 					elif action_data.get('action') == 'modify':
 						task_id = action_data.get('task_id')
 						# Get current task details for the modify form
@@ -928,6 +932,10 @@ class WebexBot(BaseBot):
 						{
 							"title": "📞 Schedule Meeting:",
 							"value": "Type 'meetings'"
+						},
+{
+							"title": "✅ Complete Task",
+							"value": ""
 						},
 						{
 							"title": "🗑️ Delete Task",

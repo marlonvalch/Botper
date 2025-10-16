@@ -1,7 +1,16 @@
 
 def strikethrough(text):
-	# Unicode strikethrough for each character
-	return ''.join([c + '\u0336' for c in text])
+	# Unicode strikethrough for each character using combining long stroke overlay
+	# This creates the e̶x̶a̶m̶p̶l̶e̶ effect - preserves spaces without strikethrough
+	if not text:
+		return text
+	result = []
+	for char in text:
+		if char == ' ':
+			result.append(' ')  # Keep spaces without strikethrough
+		else:
+			result.append(char + '\u0336')  # Add combining long stroke overlay
+	return ''.join(result)
 
 def format_task_card(tasks, platform="webex"):
 	"""
@@ -26,13 +35,34 @@ def format_task_card(tasks, platform="webex"):
 			
 			title = strikethrough(title) if checked else title
 			
-			# Create a container for each task with title and action buttons
+			# Create a container for each task with checkbox first, then title, then other actions
 			task_container = {
 				"type": "Container",
 				"items": [
 					{
 						"type": "ColumnSet",
 						"columns": [
+							{
+								"type": "Column",
+								"width": "auto",
+								"items": [
+									{
+										"type": "ActionSet",
+										"actions": [
+											{
+												"type": "Action.Submit",
+												"title": "✅" if not checked else "↩️",
+												"tooltip": "Mark as Complete" if not checked else "Mark as Incomplete",
+												"data": {
+													"action": "toggle_complete",
+													"task_id": task_id,
+													"current_status": checked
+												}
+											}
+										]
+									}
+								]
+							},
 							{
 								"type": "Column",
 								"width": "stretch",
