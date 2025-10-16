@@ -610,7 +610,7 @@ class WebexBot(BaseBot):
 			<html>
 				<head><title>Botper - Webex Integration</title></head>
 				<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-					<h1 style="color: #00BCF2;">🤖 Botper - Webex Integration</h1>
+					<h1 style="color: #00BCF2;"> Botper - Webex Integration</h1>
 					<p>Your personal task and meeting management bot for Webex</p>
 					
 					<div style="margin: 30px 0;">
@@ -625,7 +625,7 @@ class WebexBot(BaseBot):
 							border-radius: 5px; 
 							font-weight: bold;
 							margin: 10px;
-						">🚀 Connect to Webex</a>
+						"> Connect to Webex</a>
 					</div>
 					
 					<div style="margin: 30px 0; text-align: left; max-width: 600px; margin: 30px auto;">
@@ -645,7 +645,7 @@ class WebexBot(BaseBot):
 							<li>⚡ <strong>Interactive Cards:</strong> Use buttons to manage tasks efficiently</li>
 						</ul>
 						
-						<h3>🎯 Bot Commands:</h3>
+						<h3> Bot Commands:</h3>
 						<ul>
 							<li><code>task [description]</code> - Create a new task</li>
 							<li><code>list</code> - Show all tasks</li>
@@ -822,7 +822,7 @@ class WebexBot(BaseBot):
 						</style>
 					</head>
 					<body>
-						<h1 style="color: #00BCF2;">🎉 Meeting Created Successfully!</h1>
+						<h1 style="color: #00BCF2;"> Meeting Created Successfully!</h1>
 						
 						<div class="meeting-info">
 							<h2>📞 {meeting.get('title', 'Meeting')}</h2>
@@ -848,7 +848,7 @@ class WebexBot(BaseBot):
 						</div>
 						
 						<div class="next-steps">
-							<h3>🤖 What Happens Next:</h3>
+							<h3> What Happens Next:</h3>
 							<p>✅ Your bot will automatically receive a webhook about this meeting</p>
 							<p>✅ A task will be created automatically with the meeting link</p>
 							<p>✅ Check your Webex spaces where the bot is present to see the task</p>
@@ -860,7 +860,7 @@ class WebexBot(BaseBot):
 								← Schedule Another Meeting
 							</a>
 							<a href="{meeting.get('webLink', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
-								🚀 Join Meeting Now
+								 Join Meeting Now
 							</a>
 						</div>
 						
@@ -934,7 +934,7 @@ class WebexBot(BaseBot):
 							"value": ""
 						},
 						{
-							"title": "✏️ Edit Task:",
+							"title": "✏️ Edit Task",
 							"value": ""
 						}
 					],
@@ -957,11 +957,9 @@ class WebexBot(BaseBot):
 					}
 				},
 				{
-					"type": "Action.Submit",
+					"type": "Action.OpenUrl",
 					"title": "📞 Schedule Meeting",
-					"data": {
-						"action": "schedule_meeting_prompt"
-					}
+					"url": "http://localhost:8000/auth/webex"
 				}
 			]
 		}
@@ -1321,7 +1319,7 @@ class WebexBot(BaseBot):
 				"body": [
 					{
 						"type": "TextBlock",
-						"text": "📞 Meeting Options",
+						"text": "Schedule a meeting ",
 						"weight": "Bolder",
 						"size": "Large",
 						"horizontalAlignment": "Center",
@@ -1329,50 +1327,19 @@ class WebexBot(BaseBot):
 					},
 					{
 						"type": "TextBlock",
-						"text": "Choose how you'd like to create your meeting:",
+						"text": "Click on the following link to create a meeting :",
 						"wrap": True,
 						"horizontalAlignment": "Center",
 						"spacing": "Medium"
 					},
 					{
 						"type": "TextBlock",
-						"text": "🔐 Enhanced Meeting Creation",
-						"weight": "Bolder",
-						"color": "Accent"
-					},
-					{
-						"type": "TextBlock",
-						"text": f"Visit: http://localhost:{port}/auth/webex\nFor automatic meeting creation with custom scheduling",
+						"text": "[Schedule Webex Meeting](http://localhost:8000/auth/webex)",
 						"wrap": True,
+                        "horizontalAlignment": "Center",
 						"isSubtle": True
-					},
-					{
-						"type": "Input.Text",
-						"id": "meeting_title",
-						"placeholder": "Enter meeting title for quick creation...",
-						"label": "Or create a quick meeting:"
 					}
-				],
-				"actions": [
-					{
-						"type": "Action.Submit",
-						"title": "🚀 Quick Meeting",
-						"data": {
-							"action": "quick_meeting_submit"
-						}
-					},
-					{
-						"type": "Action.OpenUrl",
-						"title": "🔗 Enhanced Creation",
-						"url": f"http://localhost:{port}/auth/webex"
-					},
-					{
-						"type": "Action.Submit",
-						"title": "❌ Cancel",
-						"data": {
-							"action": "cancel_form"
-						}
-					}
+
 				]
 			}
 			
@@ -1501,32 +1468,36 @@ class WebexBot(BaseBot):
 		
 		# Fallback: If automatic creation fails, show manual instructions
 		fallback_card = {
-			"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-			"type": "AdaptiveCard",
-			"version": "1.3",
-			"body": [
-				{
-					"type": "TextBlock",
-					"text": "🎬 Schedule Meeting Manually",
-					"weight": "Bolder",
-					"size": "Large"
-				},
-				{
-					"type": "TextBlock",
-					"text": f"Meeting: {meeting_title}",
-					"weight": "Bolder",
-					"color": "Accent"
-				},
-				{
-					"type": "TextBlock",
-					"text": "⚠️ Automatic creation temporarily unavailable. Please schedule manually in Webex app.",
-					"wrap": True,
-					"color": "Warning"
-				}
-			]
-		}
+				"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"type": "AdaptiveCard",
+				"version": "1.3",
+				"body": [
+					{
+						"type": "TextBlock",
+						"text": "Schedule a meeting ",
+						"weight": "Bolder",
+						"size": "Large",
+						"horizontalAlignment": "Center",
+						"color": "Good"
+					},
+					{
+						"type": "TextBlock",
+						"text": "Click on the following link to create a meeting :",
+						"wrap": True,
+						"horizontalAlignment": "Center",
+						"spacing": "Medium"
+					},
+					{
+						"type": "TextBlock",
+						"text": "[Schedule Webex Meeting](http://localhost:8000/auth/webex)",
+						"wrap": True,
+                        "horizontalAlignment": "Center",
+						"isSubtle": True
+					}
+
+				]
+			}
 		
-		self.send_message(room_id, f"🎬 **Please schedule '{meeting_title}' manually**", card=fallback_card)
 
 	def handle_meeting_link_save(self, room_id, person_id, meeting_title, meeting_link):
 		"""Save the meeting as a task with the provided link"""
