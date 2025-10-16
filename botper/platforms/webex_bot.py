@@ -441,9 +441,23 @@ class WebexBot(BaseBot):
 							button {{ padding: 10px 20px; background-color: #00BCF2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }}
 							button:hover {{ background-color: #0099cc; }}
 							.timezone-select {{ max-height: 150px; overflow-y: auto; }}
+							.botper-logo {{
+								position: absolute;
+								top: 15px;
+								right: 20px;
+								background: linear-gradient(45deg, #00BCF2, #0099cc);
+								color: white;
+								padding: 8px 16px;
+								border-radius: 20px;
+								font-weight: bold;
+								font-size: 14px;
+								box-shadow: 0 2px 8px rgba(0,188,242,0.3);
+								border: 2px solid white;
+							}}
 						</style>
 					</head>
 					<body>
+						<div class="botper-logo"> BOTPER</div>
 						<h1 style="color: #00BCF2;"> Schedule your Meeting </h1>
 						<p>Welcome, <strong>{user_info.get('displayName', 'User')}</strong>!</p>
 						<p>Botper is now connected to your Webex account.</p>
@@ -644,8 +658,26 @@ class WebexBot(BaseBot):
 			"""Home page with integration setup instructions"""
 			return HTMLResponse(f"""
 			<html>
-				<head><title>Botper - Webex Integration</title></head>
+				<head>
+					<title>Botper - Webex Integration</title>
+					<style>
+						.botper-logo {{
+							position: absolute;
+							top: 15px;
+							right: 20px;
+							background: linear-gradient(45deg, #00BCF2, #0099cc);
+							color: white;
+							padding: 8px 16px;
+							border-radius: 20px;
+							font-weight: bold;
+							font-size: 14px;
+							box-shadow: 0 2px 8px rgba(0,188,242,0.3);
+							border: 2px solid white;
+						}}
+					</style>
+				</head>
 				<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+					<div class="botper-logo">🤖 BOTPER</div>
 					<h1 style="color: #00BCF2;"> Botper - Webex Integration</h1>
 					<p>Your personal task and meeting management bot for Webex</p>
 					
@@ -758,8 +790,26 @@ class WebexBot(BaseBot):
 					display_timezone = timezone.replace('UTC', 'GMT')
 					return HTMLResponse(f"""
 					<html>
-						<head><title>Meeting Scheduling Error</title></head>
+						<head>
+							<title>Meeting Scheduling Error</title>
+							<style>
+								.botper-logo {{
+									position: absolute;
+									top: 15px;
+									right: 20px;
+									background: linear-gradient(45deg, #00BCF2, #0099cc);
+									color: white;
+									padding: 8px 16px;
+									border-radius: 20px;
+									font-weight: bold;
+									font-size: 14px;
+									box-shadow: 0 2px 8px rgba(0,188,242,0.3);
+									border: 2px solid white;
+								}}
+							</style>
+						</head>
 						<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+							<div class="botper-logo">🤖 BOTPER</div>
 							<h1 style="color: red;">❌ Invalid Meeting Time</h1>
 							<div style="max-width: 500px; margin: 20px auto; text-align: left;">
 								<p><strong>Error:</strong> The selected meeting time must be at least 2 minutes in the future.</p>
@@ -855,9 +905,23 @@ class WebexBot(BaseBot):
 							.next-steps {{ background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 600px; }}
 							.detail-row {{ margin: 10px 0; text-align: left; }}
 							.label {{ font-weight: bold; color: #333; }}
+							.botper-logo {{
+								position: absolute;
+								top: 15px;
+								right: 20px;
+								background: linear-gradient(45deg, #00BCF2, #0099cc);
+								color: white;
+								padding: 8px 16px;
+								border-radius: 20px;
+								font-weight: bold;
+								font-size: 14px;
+								box-shadow: 0 2px 8px rgba(0,188,242,0.3);
+								border: 2px solid white;
+							}}
 						</style>
 					</head>
 					<body>
+						<div class="botper-logo">🤖 BOTPER</div>
 						<h1 style="color: #00BCF2;"> Meeting Created Successfully!</h1>
 						
 						<div class="meeting-info">
