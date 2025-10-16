@@ -50,8 +50,6 @@ class WebexBot(BaseBot):
 			if len(self.processed_messages) > 100:
 				self.processed_messages.pop()
 			
-			print(f"Webhook received: {data}")  # Debug logging
-			
 			# Handle Adaptive Card submissions (button clicks)
 			if data.get('resource') == 'attachmentActions' and data.get('event') == 'created':
 				action_id = data['data']['id']
@@ -93,6 +91,33 @@ class WebexBot(BaseBot):
 					elif action_data.get('action') == 'cancel':
 						self.send_message(room_id, "Modification cancelled.")
 						self.handle_task_command("list", room_id)
+					# Handle new greeting card actions
+					elif action_data.get('action') == 'create_task_prompt':
+						self.show_task_creation_form(room_id)
+					elif action_data.get('action') == 'list_tasks':
+						self.handle_task_command("list", room_id)
+					elif action_data.get('action') == 'schedule_meeting_prompt':
+						self.show_meeting_creation_form(room_id)
+					elif action_data.get('action') == 'create_task_submit':
+						task_title = action_data.get('task_title', '').strip()
+						if task_title:
+							self.handle_task_command("create", room_id, {"title": task_title})
+						else:
+							self.send_message(room_id, "ERROR: Task title cannot be empty!")
+					elif action_data.get('action') == 'quick_meeting_submit':
+						meeting_title = action_data.get('meeting_title', '').strip()
+						if meeting_title:
+							try:
+								# Get person info for meeting creation
+								person = self.api.people.get(person_id)
+								person_email = person.emails[0] if person.emails else "user@company.com"
+								self.handle_meeting_request(room_id, person_id, person_email, meeting_title)
+							except Exception as meeting_error:
+								self.send_message(room_id, f"ERROR: Failed to create meeting: {meeting_error}")
+						else:
+							self.send_message(room_id, "ERROR: Meeting title cannot be empty!")
+					elif action_data.get('action') == 'cancel_form':
+						self.send_message(room_id, "Action cancelled.")
 						
 				except Exception as e:
 					print(f"Error processing action {action_id}: {e}")
@@ -212,6 +237,120 @@ class WebexBot(BaseBot):
 				
 				# Notify the user (or the room) about the new meeting
 				self.send_message(room_id, f"✅ New meeting scheduled: **{meeting_title}**\n🔗 Link: {meeting_link}")
+				
+			# METHOD 1: Enhanced Membership Events - Primary greeting system
+			elif data.get('resource') == 'memberships' and data.get('event') == 'created':
+				print(f"🎉 MEMBERSHIP EVENT RECEIVED - METHOD 1 ACTIVE!")
+				try:
+					membership_data = data.get('data', {})
+					room_id = membership_data.get('roomId', '')
+					person_id = membership_data.get('personId', '')
+					person_email = membership_data.get('personEmail', '')
+					
+					print(f"📋 MEMBERSHIP DETAILS:")
+					print(f"   Room ID: {room_id}")
+					print(f"   Person ID: {person_id}")
+					print(f"   Person Email: {person_email}")
+					print(f"   Event Type: {data.get('event')}")
+					print(f"   Resource: {data.get('resource')}")
+					print(f"   Full webhook data: {data}")
+					
+					# Get bot's own person ID - ignore bot's own membership events
+					try:
+						bot_person = self.api.people.me()
+						bot_id = bot_person.id
+						print(f"🤖 Bot verification: Bot ID={bot_id}, Event Person ID={person_id}")
+						
+						if person_id == bot_id:
+							print("⏭️ SKIPPING: This is the bot's own membership event")
+							return {"status": "ok"}
+						else:
+							print(f"✅ VALID: This is a user membership event (not bot)")
+					except Exception as e:
+						print(f"❌ Bot verification error: {e}")
+					
+					# Enhanced room verification for "botper" space
+					try:
+						print(f"🏠 ROOM VERIFICATION STARTING...")
+						room = self.api.rooms.get(room_id)
+						
+						original_title = room.title if room.title else ""
+						normalized_title = original_title.lower().strip()
+						is_botper_match = normalized_title == "botper"
+						
+						print(f"📊 ROOM ANALYSIS:")
+						print(f"   Original Title: '{original_title}'")
+						print(f"   Normalized Title: '{normalized_title}'")
+						print(f"   Is Botper Match: {is_botper_match}")
+						print(f"   Room Type: {getattr(room, 'type', 'Unknown')}")
+						print(f"   Room Created: {getattr(room, 'created', 'Unknown')}")
+						
+						# PRECISE MATCH: Only "botper" space (case insensitive)
+						if is_botper_match:
+							print(f"🎯 PERFECT MATCH! User joined the BOTPER space!")
+							print(f"🚀 INITIATING GREETING SEQUENCE...")
+							
+							# Enhanced greeting delivery with multiple attempts
+							import threading
+							import time
+							
+							def robust_greeting_delivery():
+								try:
+									print(f"⏰ Starting greeting delivery sequence...")
+									
+									# Attempt 1: Immediate greeting (for fast delivery)
+									try:
+										print(f"📤 Attempt 1: Immediate greeting...")
+										self.send_greeting(room_id)
+										print(f"✅ SUCCESS: Immediate greeting sent!")
+										return
+									except Exception as immediate_error:
+										print(f"⚠️ Immediate greeting failed: {immediate_error}")
+									
+									# Attempt 2: Short delay (1 second)
+									print(f"⏰ Waiting 1 second for retry...")
+									time.sleep(1)
+									try:
+										print(f"� Attempt 2: Quick retry greeting...")
+										self.send_greeting(room_id)
+										print(f"✅ SUCCESS: Quick retry greeting sent!")
+										return
+									except Exception as quick_error:
+										print(f"⚠️ Quick retry failed: {quick_error}")
+									
+									# Attempt 3: Standard delay (2 seconds)
+									print(f"⏰ Waiting 2 more seconds for final attempt...")
+									time.sleep(2)
+									try:
+										print(f"📤 Attempt 3: Final greeting attempt...")
+										self.send_greeting(room_id)
+										print(f"✅ SUCCESS: Final greeting sent!")
+										return
+									except Exception as final_error:
+										print(f"❌ FAILURE: All greeting attempts failed: {final_error}")
+										
+								except Exception as delivery_error:
+									print(f"❌ CRITICAL: Greeting delivery system error: {delivery_error}")
+							
+							# Start robust greeting delivery in background
+							greeting_thread = threading.Thread(target=robust_greeting_delivery)
+							greeting_thread.daemon = True
+							greeting_thread.start()
+							print(f"� Robust greeting thread started with 3-attempt system")
+							
+						else:
+							print(f"❌ NOT BOTPER: Space '{original_title}' does not match 'botper' - ignoring")
+							
+					except Exception as room_error:
+						print(f"❌ ROOM VERIFICATION ERROR: {room_error}")
+						import traceback
+						print(f"🔍 Room error traceback: {traceback.format_exc()}")
+						
+				except Exception as e:
+					print(f"❌ MEMBERSHIP PROCESSING ERROR: {e}")
+					import traceback
+					print(f"🔍 Full membership error traceback: {traceback.format_exc()}")
+					return {"status": "error", "message": f"Membership event processing failed: {e}"}
 				
 			return {"status": "ok"}
 
@@ -744,9 +883,90 @@ class WebexBot(BaseBot):
 
 	def send_greeting(self, room_id):
 		print(f"Sending greeting to room: {room_id}")
-		greeting = "Hello! This is Botper! I will help you manage your tasks and meetings."
-		menu = "🎯 COMMANDS:\n\n📋 Tasks:\n- task <description>\n- list\n- delete <task id>\n\n📞 Meetings:\n- meeting <title> - Schedule a meeting\n\n💡 Examples:\n- 'task Prepare presentation for meeting'\n- 'meeting Team Standup'"
-		self.send_message(room_id, f"{greeting}\n\n{menu}")
+		greeting_text = "Hello! This is Botper I am here to help you creating tasks, webex meetings and have them listed!"
+		
+		# Create an interactive adaptive card with available options
+		greeting_card = {
+			"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+			"type": "AdaptiveCard",
+			"version": "1.3",
+			"body": [
+				{
+					"type": "TextBlock",
+					"text": " Hello! This is Botper",
+					"weight": "Bolder",
+					"size": "Large",
+					"horizontalAlignment": "Center",
+					"color": "Good"
+				},
+				{
+					"type": "TextBlock",
+					"text": "I am here to help you creating tasks, webex meetings and have them listed!",
+					"wrap": True,
+					"horizontalAlignment": "Center",
+					"isSubtle": True,
+					"spacing": "Medium"
+				},
+				{
+					"type": "TextBlock",
+					"text": " Available Options:",
+					"weight": "Bolder",
+					"size": "Medium",
+					"spacing": "Large"
+				},
+				{
+					"type": "FactSet",
+					"facts": [
+						{
+							"title": "📋 Create Task:",
+							"value": "Type 'task [description]'"
+						},
+						{
+							"title": "📝 List Tasks:",
+							"value": "Type 'list'"
+						},
+						{
+							"title": "📞 Schedule Meeting:",
+							"value": "Type 'meetings'"
+						},
+						{
+							"title": "🗑️ Delete Task",
+							"value": ""
+						},
+						{
+							"title": "✏️ Edit Task:",
+							"value": ""
+						}
+					],
+					"spacing": "Medium"
+				}
+			],
+			"actions": [
+				{
+					"type": "Action.Submit",
+					"title": "📋 Create Task",
+					"data": {
+						"action": "create_task_prompt"
+					}
+				},
+				{
+					"type": "Action.Submit",
+					"title": "📝 List Tasks",
+					"data": {
+						"action": "list_tasks"
+					}
+				},
+				{
+					"type": "Action.Submit",
+					"title": "📞 Schedule Meeting",
+					"data": {
+						"action": "schedule_meeting_prompt"
+					}
+				}
+			]
+		}
+		
+		self.send_message(room_id, greeting_text, card=greeting_card)
 
 	def start(self, port=8000):
 		self.current_port = port  # Store current port for OAuth URL generation
@@ -815,7 +1035,7 @@ class WebexBot(BaseBot):
 				"actions": [
 					{
 						"type": "Action.OpenUrl",
-						"title": "🚀 Join Now",
+						"title": " Join Now",
 						"url": meeting_link
 					}
 				]
@@ -834,31 +1054,20 @@ class WebexBot(BaseBot):
 					"value": participants_display
 				})
 			
-			# Send notification to selected rooms (excluding source room)
+			# Send notification only to "botper" room
 			notification_count = 0
-			max_additional_rooms = 5
 			
 			try:
 				# Get all rooms/spaces where the bot is present
 				rooms = list(self.api.rooms.list())
 				
 				for room in rooms:
-					# Skip the source room (botper room) to avoid duplicate notifications
-					if room.id == source_room_id:
-						continue
-						
-					# Stop if we've sent enough notifications
-					if notification_count >= max_additional_rooms:
-						break
-					
 					try:
-						# Skip direct message rooms for general notifications
-						if room.type == "direct":
-							continue
-							
-						self.send_message(room.id, notification_text, card=notification_card)
-						notification_count += 1
-						print(f"✅ Meeting notification sent to room: {room.title}")
+						# Only send to rooms with "botper" in the title (case insensitive)
+						if room.title and "botper" in room.title.lower():
+							self.send_message(room.id, notification_text, card=notification_card)
+							notification_count += 1
+							print(f"✅ Meeting notification sent to botper room: {room.title}")
 						
 					except Exception as room_error:
 						print(f"❌ Failed to send notification to room {room.id}: {room_error}")
@@ -866,7 +1075,7 @@ class WebexBot(BaseBot):
 			except Exception as rooms_error:
 				print(f"❌ Failed to get room list: {rooms_error}")
 			
-			print(f"📢 Meeting notification sent to {notification_count} Webex spaces (excluding source room)")
+			print(f"📢 Meeting notification sent to {notification_count} botper room(s)")
 			
 		except Exception as e:
 			print(f"❌ Error sending meeting notifications: {e}")
@@ -1053,6 +1262,124 @@ class WebexBot(BaseBot):
 				
 		except Exception as e:
 			self.send_message(room_id, f"ERROR: Error updating task: {e}")
+
+	def show_task_creation_form(self, room_id):
+		"""Show a form to create a new task"""
+		try:
+			task_form_card = {
+				"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"type": "AdaptiveCard",
+				"version": "1.3",
+				"body": [
+					{
+						"type": "TextBlock",
+						"text": "📋 Create New Task",
+						"weight": "Bolder",
+						"size": "Large",
+						"horizontalAlignment": "Center",
+						"color": "Good"
+					},
+					{
+						"type": "Input.Text",
+						"id": "task_title",
+						"placeholder": "Enter your task description...",
+						"isRequired": True,
+						"label": "Task Description"
+					}
+				],
+				"actions": [
+					{
+						"type": "Action.Submit",
+						"title": "✅ Create Task",
+						"data": {
+							"action": "create_task_submit"
+						}
+					},
+					{
+						"type": "Action.Submit",
+						"title": "❌ Cancel",
+						"data": {
+							"action": "cancel_form"
+						}
+					}
+				]
+			}
+			
+			self.send_message(room_id, "Please enter your task details:", card=task_form_card)
+			
+		except Exception as e:
+			self.send_message(room_id, f"ERROR: Error creating task form: {e}")
+
+	def show_meeting_creation_form(self, room_id):
+		"""Show options for meeting creation"""
+		try:
+			port = getattr(self, 'current_port', 8001)
+			meeting_options_card = {
+				"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"type": "AdaptiveCard",
+				"version": "1.3",
+				"body": [
+					{
+						"type": "TextBlock",
+						"text": "📞 Meeting Options",
+						"weight": "Bolder",
+						"size": "Large",
+						"horizontalAlignment": "Center",
+						"color": "Good"
+					},
+					{
+						"type": "TextBlock",
+						"text": "Choose how you'd like to create your meeting:",
+						"wrap": True,
+						"horizontalAlignment": "Center",
+						"spacing": "Medium"
+					},
+					{
+						"type": "TextBlock",
+						"text": "🔐 Enhanced Meeting Creation",
+						"weight": "Bolder",
+						"color": "Accent"
+					},
+					{
+						"type": "TextBlock",
+						"text": f"Visit: http://localhost:{port}/auth/webex\nFor automatic meeting creation with custom scheduling",
+						"wrap": True,
+						"isSubtle": True
+					},
+					{
+						"type": "Input.Text",
+						"id": "meeting_title",
+						"placeholder": "Enter meeting title for quick creation...",
+						"label": "Or create a quick meeting:"
+					}
+				],
+				"actions": [
+					{
+						"type": "Action.Submit",
+						"title": "🚀 Quick Meeting",
+						"data": {
+							"action": "quick_meeting_submit"
+						}
+					},
+					{
+						"type": "Action.OpenUrl",
+						"title": "🔗 Enhanced Creation",
+						"url": f"http://localhost:{port}/auth/webex"
+					},
+					{
+						"type": "Action.Submit",
+						"title": "❌ Cancel",
+						"data": {
+							"action": "cancel_form"
+						}
+					}
+				]
+			}
+			
+			self.send_message(room_id, "Meeting creation options:", card=meeting_options_card)
+			
+		except Exception as e:
+			self.send_message(room_id, f"ERROR: Error creating meeting form: {e}")
 
 	def redirect_to_webex_meeting(self, room_id, person_id, meeting_title):
 		"""Redirect user to Webex native scheduler with automatic detection"""
