@@ -202,6 +202,38 @@ class WebexBot(BaseBot):
 					elif text.startswith("delete"):
 						task_id = msg.text[7:].strip()
 						self.handle_task_command("delete", room_id, {"task_id": task_id})
+					elif text == "meetings":
+						# Show meeting options card
+						meeting_options_card = {
+							"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+							"type": "AdaptiveCard",
+							"version": "1.3",
+							"body": [
+								{
+									"type": "TextBlock",
+									"text": "Schedule a meeting ",
+									"weight": "Bolder",
+									"size": "Large",
+									"horizontalAlignment": "Center",
+									"color": "Good"
+								},
+								{
+									"type": "TextBlock",
+									"text": "Click on the following link to create a meeting :",
+									"wrap": True,
+									"horizontalAlignment": "Center",
+									"spacing": "Medium"
+								},
+								{
+									"type": "TextBlock",
+									"text": "[Schedule Webex Meeting](http://localhost:8000/auth/webex)",
+									"wrap": True,
+									"horizontalAlignment": "Center",
+									"isSubtle": True
+								}
+							]
+						}
+						self.send_message(room_id, "Meeting options:", card=meeting_options_card)
 					elif text.startswith("schedule meeting") or text.startswith("meeting"):
 						meeting_title = msg.text.replace("schedule meeting", "").replace("meeting", "").strip()
 						if meeting_title:
@@ -399,7 +431,7 @@ class WebexBot(BaseBot):
 				return HTMLResponse(f"""
 				<html>
 					<head>
-						<title>Botper - Authorization Successful</title>
+						<title>Botper - Schedule your Meeting </title>
 						<style>
 							body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; }}
 							.form-container {{ max-width: 600px; margin: 0 auto; text-align: left; }}
@@ -412,12 +444,12 @@ class WebexBot(BaseBot):
 						</style>
 					</head>
 					<body>
-						<h1 style="color: #00BCF2;">✅ Authorization Successful!</h1>
+						<h1 style="color: #00BCF2;"> Schedule your Meeting </h1>
 						<p>Welcome, <strong>{user_info.get('displayName', 'User')}</strong>!</p>
 						<p>Botper is now connected to your Webex account.</p>
 						
 						<div class="form-container">
-							<h2>🎯 Schedule Meeting</h2>
+							<h2> Schedule Meeting</h2>
 							<p>Create a meeting with custom time, timezone, and participants:</p>
 							<form action="/create-meeting" method="post">
 								<input type="hidden" name="user_id" value="{user_id}">
@@ -573,7 +605,7 @@ class WebexBot(BaseBot):
 								</div>
 								
 								<div class="form-group">
-									<button type="submit">🚀 Schedule Meeting</button>
+									<button type="submit"> Schedule Meeting</button>
 								</div>
 							</form>
 						</div>
@@ -1268,6 +1300,24 @@ class WebexBot(BaseBot):
 				
 		except Exception as e:
 			self.send_message(room_id, f"ERROR: Error updating task: {e}")
+
+	def handle_toggle_complete(self, room_id, task_id, current_status):
+		"""Toggle task completion status"""
+		try:
+			# Toggle the completion status
+			new_status = not current_status
+			update_result = self.task_manager.update_task(task_id, {"completed": new_status})
+			
+			if update_result.modified_count > 0:
+				status_text = "completed" if new_status else "reopened"
+				self.send_message(room_id, f"✅ Task marked as {status_text}!")
+				# Refresh the task list to show the updated status
+				self.handle_task_command("list", room_id)
+			else:
+				self.send_message(room_id, "ERROR: Task not found or no changes made.")
+				
+		except Exception as e:
+			self.send_message(room_id, f"ERROR: Error updating task status: {e}")
 
 	def show_task_creation_form(self, room_id):
 		"""Show a form to create a new task"""
