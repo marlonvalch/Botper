@@ -6,7 +6,8 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from webexteamssdk import WebexTeamsAPI
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from core.base_bot import BaseBot
 from core.tasks import TaskManager
 from utils.helpers import format_task_card
@@ -398,16 +399,49 @@ class WebexBot(BaseBot):
 				auth_url = self.oauth_handler.get_authorization_url(state)
 				return RedirectResponse(url=auth_url)
 			except Exception as e:
-				return HTMLResponse(f"<h1>Error</h1><p>Failed to start OAuth flow: {e}</p>", status_code=500)
+				return HTMLResponse(f"""
+				<html>
+					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Error</h1>
+						</div>
+						<p>Failed to start OAuth flow: {e}</p>
+						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
+					</body>
+				</html>
+				""", status_code=500)
 
 		@self.app.get("/auth/webex/callback")
 		async def oauth_callback(code: str = None, state: str = None, error: str = None):
 			"""Handle OAuth callback from Webex"""
 			if error:
-				return HTMLResponse(f"<h1>Authorization Error</h1><p>{error}</p>", status_code=400)
+				return HTMLResponse(f"""
+				<html>
+					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Authorization Error</h1>
+						</div>
+						<p>{error}</p>
+						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
+					</body>
+				</html>
+				""", status_code=400)
 			
 			if not code:
-				return HTMLResponse("<h1>Error</h1><p>No authorization code received</p>", status_code=400)
+				return HTMLResponse("""
+				<html>
+					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Error</h1>
+						</div>
+						<p>No authorization code received</p>
+						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
+					</body>
+				</html>
+				""", status_code=400)
 			
 			try:
 				# Exchange code for tokens
@@ -441,24 +475,13 @@ class WebexBot(BaseBot):
 							button {{ padding: 10px 20px; background-color: #00BCF2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }}
 							button:hover {{ background-color: #0099cc; }}
 							.timezone-select {{ max-height: 150px; overflow-y: auto; }}
-							.botper-logo {{
-								position: absolute;
-								top: 15px;
-								right: 20px;
-								background: linear-gradient(45deg, #00BCF2, #0099cc);
-								color: white;
-								padding: 8px 16px;
-								border-radius: 20px;
-								font-weight: bold;
-								font-size: 14px;
-								box-shadow: 0 2px 8px rgba(0,188,242,0.3);
-								border: 2px solid white;
-							}}
 						</style>
 					</head>
 					<body>
-						<div class="botper-logo"> BOTPER</div>
-						<h1 style="color: #00BCF2;"> Schedule your Meeting </h1>
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: #00BCF2; margin: 0;"> Schedule your Meeting </h1>
+						</div>
 						<p>Welcome, <strong>{user_info.get('displayName', 'User')}</strong>!</p>
 						<p>Botper is now connected to your Webex account.</p>
 						
@@ -651,35 +674,33 @@ class WebexBot(BaseBot):
 				
 			except Exception as e:
 				print(f"OAuth callback error: {e}")
-				return HTMLResponse(f"<h1>Error</h1><p>Failed to complete authorization: {e}</p>", status_code=500)
+				return HTMLResponse(f"""
+				<html>
+					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Error</h1>
+						</div>
+						<p>Failed to complete authorization: {e}</p>
+						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
+					</body>
+				</html>
+				""", status_code=500)
 
 		@self.app.get("/")
 		async def home():
 			"""Home page with integration setup instructions"""
 			return HTMLResponse(f"""
 			<html>
-				<head>
-					<title>Botper - Webex Integration</title>
-					<style>
-						.botper-logo {{
-							position: absolute;
-							top: 15px;
-							right: 20px;
-							background: linear-gradient(45deg, #00BCF2, #0099cc);
-							color: white;
-							padding: 8px 16px;
-							border-radius: 20px;
-							font-weight: bold;
-							font-size: 14px;
-							box-shadow: 0 2px 8px rgba(0,188,242,0.3);
-							border: 2px solid white;
-						}}
-					</style>
-				</head>
+				<head><title>Botper - Webex Integration</title></head>
 				<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-					<div class="botper-logo">🤖 BOTPER</div>
-					<h1 style="color: #00BCF2;"> Botper - Webex Integration</h1>
-					<p>Your personal task and meeting management bot for Webex</p>
+					<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+						<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 64px; height: 64px; margin-right: 15px;">
+						<div>
+							<h1 style="color: #00BCF2; margin: 0;"> Botper - Webex Integration</h1>
+							<p style="margin: 5px 0;">Your personal task and meeting management bot for Webex</p>
+						</div>
+					</div>
 					
 					<div style="margin: 30px 0;">
 						<h2>🔗 Connect Your Account</h2>
@@ -738,7 +759,18 @@ class WebexBot(BaseBot):
 			participants_str = form_data.get('participants', '')
 			
 			if not user_id or user_id not in self.user_tokens:
-				return HTMLResponse("<h1>Error</h1><p>User not authorized. Please authorize first.</p>", status_code=400)
+				return HTMLResponse("""
+				<html>
+					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Error</h1>
+						</div>
+						<p>User not authorized. Please authorize first.</p>
+						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
+					</body>
+				</html>
+				""", status_code=400)
 			
 			try:
 				# Get user's access token
@@ -790,26 +822,8 @@ class WebexBot(BaseBot):
 					display_timezone = timezone.replace('UTC', 'GMT')
 					return HTMLResponse(f"""
 					<html>
-						<head>
-							<title>Meeting Scheduling Error</title>
-							<style>
-								.botper-logo {{
-									position: absolute;
-									top: 15px;
-									right: 20px;
-									background: linear-gradient(45deg, #00BCF2, #0099cc);
-									color: white;
-									padding: 8px 16px;
-									border-radius: 20px;
-									font-weight: bold;
-									font-size: 14px;
-									box-shadow: 0 2px 8px rgba(0,188,242,0.3);
-									border: 2px solid white;
-								}}
-							</style>
-						</head>
+						<head><title>Meeting Scheduling Error</title></head>
 						<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-							<div class="botper-logo">🤖 BOTPER</div>
 							<h1 style="color: red;">❌ Invalid Meeting Time</h1>
 							<div style="max-width: 500px; margin: 20px auto; text-align: left;">
 								<p><strong>Error:</strong> The selected meeting time must be at least 2 minutes in the future.</p>
@@ -905,24 +919,13 @@ class WebexBot(BaseBot):
 							.next-steps {{ background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px auto; max-width: 600px; }}
 							.detail-row {{ margin: 10px 0; text-align: left; }}
 							.label {{ font-weight: bold; color: #333; }}
-							.botper-logo {{
-								position: absolute;
-								top: 15px;
-								right: 20px;
-								background: linear-gradient(45deg, #00BCF2, #0099cc);
-								color: white;
-								padding: 8px 16px;
-								border-radius: 20px;
-								font-weight: bold;
-								font-size: 14px;
-								box-shadow: 0 2px 8px rgba(0,188,242,0.3);
-								border: 2px solid white;
-							}}
 						</style>
 					</head>
 					<body>
-						<div class="botper-logo">🤖 BOTPER</div>
-						<h1 style="color: #00BCF2;"> Meeting Created Successfully!</h1>
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: #00BCF2; margin: 0;"> Meeting Created Successfully!</h1>
+						</div>
 						
 						<div class="meeting-info">
 							<h2>📞 {meeting.get('title', 'Meeting')}</h2>
@@ -974,12 +977,27 @@ class WebexBot(BaseBot):
 				return HTMLResponse(f"""
 				<html>
 					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-						<h1 style="color: red;">❌ Meeting Creation Failed</h1>
+						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<h1 style="color: red; margin: 0;">❌ Meeting Creation Failed</h1>
+						</div>
 						<p>Error: {str(e)}</p>
 						<p><a href="/" style="color: #00BCF2;">← Back to Home</a></p>
 					</body>
 				</html>
 				""", status_code=500)
+
+		# Static file serving for bot icon and other assets
+		import os
+		static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+		
+		# Mount static files directory
+		self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
+		
+		@self.app.get("/static/bot-icon.svg")
+		async def serve_bot_icon():
+			static_path = os.path.join(static_dir, "bot-icon.svg")
+			return FileResponse(static_path, media_type="image/svg+xml")
 
 	def send_greeting(self, room_id):
 		print(f"Sending greeting to room: {room_id}")
