@@ -79,7 +79,8 @@ The startup will:
 
 1. **Get started:**
    ```
-   User: "hello"
+   User: "hello" or "help"
+   
    Bot: Hello! This is Botper! I will help you manage your tasks and meetings.
    
    🎯 COMMANDS:

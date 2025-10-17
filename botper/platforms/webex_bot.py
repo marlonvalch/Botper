@@ -21,18 +21,21 @@ ENABLE_MEETING_NOTIFICATIONS = os.getenv("ENABLE_MEETING_NOTIFICATIONS", "true")
 
 class WebexBot(BaseBot):
 	def __init__(self):
-		self.api = WebexTeamsAPI(access_token=WEBEX_BOT_TOKEN)
-		self.access_token = WEBEX_BOT_TOKEN
-		self.task_manager = TaskManager()
-		self.app = FastAPI()
-		self.oauth_handler = WebexOAuthHandler()
-		self.user_tokens = {}  # Store user OAuth tokens (in production, use a database)
-		self.processed_messages = set()  # Track processed message IDs to avoid duplicates
-		self.pending_meeting_tasks = {}  # Track meeting title for linking task
-		self.processed_events = set()  # Track processed calendar events
-		self.enable_notifications = ENABLE_MEETING_NOTIFICATIONS  # Control meeting notifications
-		self.setup_routes()
-		# Calendar monitoring disabled - bot token doesn't have meeting API access
+		try:
+			self.api = WebexTeamsAPI(access_token=WEBEX_BOT_TOKEN)
+			self.access_token = WEBEX_BOT_TOKEN
+			self.task_manager = TaskManager()
+			self.app = FastAPI()
+			self.oauth_handler = WebexOAuthHandler()
+			self.user_tokens = {}  # Store user OAuth tokens (in production, use a database)
+			self.processed_messages = set()  # Track processed message IDs to avoid duplicates
+			self.pending_meeting_tasks = {}  # Track meeting title for linking task
+			self.processed_events = set()  # Track processed calendar events
+			self.enable_notifications = ENABLE_MEETING_NOTIFICATIONS  # Control meeting notifications
+			self.setup_routes()
+			# Calendar monitoring disabled - bot token doesn't have meeting API access
+		except Exception as e:
+			print(f"Error in __init__: {e}")
 
 	def setup_routes(self):
 		@self.app.post("/webex/webhook")
@@ -191,7 +194,7 @@ class WebexBot(BaseBot):
 					text = msg.text.strip().lower()
 					print(f"Processing message: '{text}' from person: {person_id}")
 					
-					if text == "hello" or text == "hi":
+					if text == "hello" or text == "help":
 						self.send_greeting(room_id)
 					elif text.startswith("task"):
 						task_title = msg.text[5:].strip()
