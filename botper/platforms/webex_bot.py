@@ -403,7 +403,7 @@ class WebexBot(BaseBot):
 				<html>
 					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
 						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<img src="/static/file%20(1).svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
 							<h1 style="color: red; margin: 0;">❌ Error</h1>
 						</div>
 						<p>Failed to start OAuth flow: {e}</p>
@@ -420,7 +420,7 @@ class WebexBot(BaseBot):
 				<html>
 					<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
 						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<img src="/static/file%20(1).svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
 							<h1 style="color: red; margin: 0;">❌ Authorization Error</h1>
 						</div>
 						<p>{error}</p>
@@ -479,7 +479,7 @@ class WebexBot(BaseBot):
 					</head>
 					<body>
 						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<img src="/static/file%20(1).svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
 							<h1 style="color: #00BCF2; margin: 0;"> Schedule your Meeting </h1>
 						</div>
 						<p>Welcome, <strong>{user_info.get('displayName', 'User')}</strong>!</p>
@@ -689,59 +689,16 @@ class WebexBot(BaseBot):
 
 		@self.app.get("/")
 		async def home():
-			"""Home page with integration setup instructions"""
+			"""Simple authorize page with icon and button"""
 			return HTMLResponse(f"""
 			<html>
-				<head><title>Botper - Webex Integration</title></head>
+				<head><title>Authorize Botper</title></head>
 				<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-					<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-						<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 64px; height: 64px; margin-right: 15px;">
-						<div>
-							<h1 style="color: #00BCF2; margin: 0;"> Botper - Webex Integration</h1>
-							<p style="margin: 5px 0;">Your personal task and meeting management bot for Webex</p>
-						</div>
+					<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 30px;">
+						<img src="/static/file%20(1).svg" alt="Botper Bot" style="width: 80px; height: 80px; margin-right: 20px;">
+						<h1 style="color: #00BCF2; margin: 0;">Botper Authorization</h1>
 					</div>
-					
-					<div style="margin: 30px 0;">
-						<h2>🔗 Connect Your Account</h2>
-						<p>Authorize Botper to create meetings on your behalf:</p>
-						<a href="/auth/webex" style="
-							display: inline-block; 
-							padding: 15px 30px; 
-							background-color: #00BCF2; 
-							color: white; 
-							text-decoration: none; 
-							border-radius: 5px; 
-							font-weight: bold;
-							margin: 10px;
-						"> Connect to Webex</a>
-					</div>
-					
-					<div style="margin: 30px 0; text-align: left; max-width: 600px; margin: 30px auto;">
-						<h3>🔄 How It Works:</h3>
-						<ol>
-							<li><strong>Authorize:</strong> Click "Connect to Webex" above</li>
-							<li><strong>Create:</strong> Integration creates meetings with your permissions</li>
-							<li><strong>Detect:</strong> Bot automatically detects new meetings via webhooks</li>
-							<li><strong>Task:</strong> Bot creates tasks with meeting links automatically</li>
-						</ol>
-						
-						<h3>✨ What Botper Can Do:</h3>
-						<ul>
-							<li>📋 <strong>Task Management:</strong> Create, list, modify, and delete tasks</li>
-							<li>📞 <strong>Meeting Integration:</strong> Automatic task creation for scheduled meetings</li>
-							<li>� <strong>OAuth Integration:</strong> Create meetings directly via authorization</li>
-							<li>⚡ <strong>Interactive Cards:</strong> Use buttons to manage tasks efficiently</li>
-						</ul>
-						
-						<h3> Bot Commands:</h3>
-						<ul>
-							<li><code>task [description]</code> - Create a new task</li>
-							<li><code>list</code> - Show all tasks</li>
-							<li><code>delete [task_id]</code> - Remove a task</li>
-							<li><code>meeting [title]</code> - Schedule a Webex meeting</li>
-						</ul>
-					</div>
+					<a href="/auth/webex" style="display: inline-block; padding: 18px 40px; background-color: #00BCF2; color: white; text-decoration: none; border-radius: 8px; font-size: 22px; font-weight: bold;">Authorize</a>
 				</body>
 			</html>
 			""")
@@ -923,7 +880,7 @@ class WebexBot(BaseBot):
 					</head>
 					<body>
 						<div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-							<img src="/static/bot-icon.svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
+							<img src="/static/file%20(1).svg" alt="Botper Bot" style="width: 48px; height: 48px; margin-right: 10px;">
 							<h1 style="color: #00BCF2; margin: 0;"> Meeting Created Successfully!</h1>
 						</div>
 						
@@ -959,7 +916,7 @@ class WebexBot(BaseBot):
 						</div>
 						
 						<div style="margin: 30px 0;">
-							<a href="/" style="background-color: #00BCF2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
+							<a href="/auth/webex" style="background-color: #00BCF2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
 								← Schedule Another Meeting
 							</a>
 							<a href="{meeting.get('webLink', '#')}" target="_blank" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 10px;">
@@ -994,9 +951,9 @@ class WebexBot(BaseBot):
 		# Mount static files directory
 		self.app.mount("/static", StaticFiles(directory=static_dir), name="static")
 		
-		@self.app.get("/static/bot-icon.svg")
+		@self.app.get("/static/file(1).svg")
 		async def serve_bot_icon():
-			static_path = os.path.join(static_dir, "bot-icon.svg")
+			static_path = os.path.join(static_dir, "file(1).svg")
 			return FileResponse(static_path, media_type="image/svg+xml")
 
 	def send_greeting(self, room_id):
