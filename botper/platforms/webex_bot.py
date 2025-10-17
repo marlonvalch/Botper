@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -906,13 +905,10 @@ class WebexBot(BaseBot):
 							</div>
 							{f'<div class="detail-row"><span class="label">Password:</span> {meeting.get("password", "N/A")}</div>' if meeting.get("password") else ''}
 						</div>
-						
-						<div class="next-steps">
-							<h3> What Happens Next:</h3>
-							<p>✅ Your bot will automatically receive a webhook about this meeting</p>
-							<p>✅ A task will be created automatically with the meeting link</p>
-							<p>✅ Check your Webex spaces where the bot is present to see the task</p>
-							{f'<p>✅ Invitations sent to: {len(participants_list)} participant{"s" if len(participants_list) != 1 else ""}</p>' if participants_list else ''}
+						<br>
+                        <br>
+						<div class="Meeting has been saved in your tasks">
+							<p>✅ Your meeting has been saved in your tasks, You can join from tasks as well</p>
 						</div>
 						
 						<div style="margin: 30px 0;">
@@ -1166,7 +1162,7 @@ class WebexBot(BaseBot):
 		elif command == "list":
 			tasks = self.task_manager.list_tasks()
 			card = format_task_card(tasks, platform="webex")
-			self.send_message(room_id, "Here are your tasks:", card=card)
+			self.send_message(room_id, "📋 Tasks", card=card)
 		elif command == "delete":
 			try:
 				self.task_manager.delete_task(data["task_id"])

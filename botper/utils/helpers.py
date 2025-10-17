@@ -121,7 +121,7 @@ def format_task_card(tasks, platform="webex"):
 			"body": [
 				{
 					"type": "TextBlock", 
-					"text": "📋 Your Tasks", 
+					"text": "📋 Tasks", 
 					"weight": "Bolder", 
 					"size": "Large",
 					"horizontalAlignment": "Center"

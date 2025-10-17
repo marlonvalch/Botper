@@ -51,6 +51,7 @@ A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and me
 6. **Run the app**
 
    ```powershell
+   .\.venv\Scripts\Activate.ps1
    python botper/main.py
    ```
 
@@ -83,12 +84,16 @@ The startup will:
    
    🎯 COMMANDS:
    📋 Tasks:
-   - task <description>
-   - list
-   - delete <task id>
+   - task <description> : create tasks 
+   - list : list tasks
+    - Meetings:  Schedule Meetings
+    
+   -From the card
+   -✅ Complete Task
+   -  Delete Task
+   -✏️ Edit Task
+  
    
-   📞 Meetings:
-   - meeting <title> - Schedule a meeting
    ```
 
 2. **Create tasks:**
@@ -104,28 +109,10 @@ The startup will:
    Bot: [Shows adaptive card with checkboxes, modify/delete buttons]
    ```
 
-### **Enhanced Usage (With OAuth Integration)**
-
-**Setup OAuth (one-time):**
-1. Visit `http://localhost:8001` (or ngrok URL)
-2. Click "🚀 Connect to Webex"
-3. Authorize the integration
-
-**Now meetings are automatic:**
-```
-User: "meeting Team Standup" 
-Bot: "✅ Meeting Created Successfully!
-
-📞 Team Standup
-🔗 Link: https://cisco.webex.com/meet/pr123456789
-⏰ Starts: 15:00 UTC
-
-🤖 Automatically added to your tasks!"
-```
 
 ### **Key Benefits**
-- **Simple Commands**: Just type in Webex chat
-- **Real Meetings**: Creates actual Webex video calls
+- **Simple Commands**: Just type in Webex bot chat
+- **Meetings**: Creates actual Webex video calls
 - **Auto Tasks**: Meetings become trackable tasks automatically
 - **Interactive**: Click buttons instead of typing commands
 - **Persistent**: Tasks saved in MongoDB
@@ -138,4 +125,5 @@ Bot: "✅ Meeting Created Successfully!
 ## Notes
 - Meeting links are real, functional Webex video calls created via official API
 - OAuth integration enables automatic meeting creation with user permissions
-- For production, configure proper webhook URLs and security
+- For production, configure proper webhook URLs and security , you can set 
+- ⚠️Microsoft Teams meeting and Zoom meeting bots are in maintentance 
