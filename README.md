@@ -59,7 +59,35 @@ A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and me
 
 7. **Expose endpoints (for local dev)**
 
-   Use [ngrok](https://ngrok.com/) or similar to expose your FastAPI endpoints to the internet for Webex/Teams/Zoom webhooks.
+   Ngrok tunnel:(ngrok is a tunneling tool. It gives  local machine a temporary, public HTTPS URL that forwards traffic to a port on localhost (e.g., http://127.0.0.1:8000). That lets cloud services (like Webex or Microsoft Teams) send webhooks to this app  running only on the user device.)
+
+   Use [ngrok](https://ngrok.com/) or similar to expose  FastAPI endpoints to the internet for Webex/Teams/Zoom webhooks.
+
+## Running in a Container
+
+1. Build the Docker image:
+
+```sh
+docker build -t botper-app .
+```
+
+2. Run the container:
+
+```sh
+docker run -p 8000:8000 --env WEBEX_BOT_TOKEN=your_token_here botper-app
+```
+
+## Jenkins Pipeline
+
+- The included `Jenkinsfile` will:
+  - Build the Docker image
+  - Optionally run tests (edit as needed)
+  - Optionally push to a Docker registry (set `REGISTRY` env var)
+
+To use:
+1. Set up a Jenkins job with this repo.
+2. Make sure Jenkins has Docker and Python installed.
+3. Configure any secrets (like `WEBEX_BOT_TOKEN`) as needed.
 
 ## 👤 User Interaction Flow
 
@@ -127,4 +155,4 @@ The startup will:
 - Meeting links are real, functional Webex video calls created via official API
 - OAuth integration enables automatic meeting creation with user permissions
 - For production, configure proper webhook URLs and security , you can set 
-- ⚠️Microsoft Teams meeting and Zoom meeting bots are in maintentance 
+- ⚠️Microsoft Teams meeting and Zoom meeting bots are in maintentance
