@@ -8,6 +8,7 @@ A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and me
 - Meeting scheduling (Webex, Teams, Zoom) as tasks
 - MongoDB backend for tasks and meetings
 - FastAPI + Uvicorn for webhook endpoints
+- App can be run on a container with the current docker.
 
 ## Prerequisites
 - Python 3.8+
@@ -74,7 +75,7 @@ docker build -t botper-app .
 2. Run the container:
 
 ```sh
-docker run -p 8000:8000 --env WEBEX_BOT_TOKEN=your_token_here botper-app
+docker run -p 8000:8000 --env WEBEX_BOT_TOKEN=Botper_token_here
 ```
 
 ## Jenkins Pipeline
