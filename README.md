@@ -122,6 +122,9 @@ The startup will:
    -✅ Complete Task
    -  Delete Task
    -✏️ Edit Task
+   - Schedule meeting button
+   -Create note button
+   -Edit note button
   
    
    ```
@@ -140,12 +143,6 @@ The startup will:
    ```
 
 
-### **Key Benefits**
-- **Simple Commands**: Just type in Webex bot chat
-- **Meetings**: Creates actual Webex video calls
-- **Auto Tasks**: Meetings become trackable tasks automatically
-- **Interactive**: Click buttons instead of typing commands
-- **Persistent**: Tasks saved in MongoDB
 
 ## Webhook Endpoints
 - Webex: `POST /webex/webhook` (default port 8001)
@@ -153,7 +150,5 @@ The startup will:
 - Zoom: `POST /zoom/webhook` (default port 8003)
 
 ## Notes
-- Meeting links are real, functional Webex video calls created via official API
-- OAuth integration enables automatic meeting creation with user permissions
-- For production, configure proper webhook URLs and security , you can set 
+-  Functional Webex video calls created via official API
 - ⚠️Microsoft Teams meeting and Zoom meeting bots are in maintentance
