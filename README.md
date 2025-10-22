@@ -1,6 +1,8 @@
 # Botper
 
 A multiplatform bot for Webex, Microsoft Teams, and Zoom, supporting task and meeting management with adaptive cards and MongoDB.
+Ready to run on a container with the Docker file in the project 
+Ready to start a CI/CD process with Jenkins file in the project
 
 ## Features
 - Webex, Teams, and Zoom bot support (runs any/all platforms based on .env config)
